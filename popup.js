@@ -1,3 +1,55 @@
+// ============================================================================
+// Chrome Storage API ラッパー（インライン化）
+// ============================================================================
+
+const storageGet = (keys) => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.get(keys, (result) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+const storageSet = (obj) => {
+  return new Promise((resolve, reject) => {
+    chrome.storage.sync.set(obj, () => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+// ============================================================================
+// 言語検出関数（インライン化）
+// ============================================================================
+
+const detectLanguage = (hostname = null) => {
+  const htmlLang = typeof document !== 'undefined' ? document.documentElement.lang : '';
+  if (htmlLang && htmlLang.startsWith('ja')) return 'ja';
+
+  if (!hostname && typeof location !== 'undefined') {
+    hostname = location.hostname;
+  }
+
+  if (hostname && hostname.includes('.co.jp')) {
+    return 'ja';
+  }
+
+  const nav = typeof navigator !== 'undefined' ? navigator.language : '';
+  return nav.startsWith('ja') ? 'ja' : 'en';
+};
+
+// ============================================================================
+// メインロジック
+// ============================================================================
+
 document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('widget-form');
   const status = document.getElementById('status');
@@ -18,34 +70,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // 言語を検出する（ウィジェットと同じロジック）
-  const detectLanguage = async () => {
+  // 言語を検出する（Amazon タブを優先的に探す）
+  const detectLanguageForCurrentTab = async () => {
     try {
-      // 現在のアクティブなタブを取得
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab) {
-        // タブがない場合はデフォルト
-        return navigator.language?.startsWith('ja') ? 'ja' : 'en';
+      console.log('Starting language detection...');
+
+      // 1. Amazon タブを探す
+      const amazonTabs = await chrome.tabs.query({
+        url: ['*://www.amazon.co.jp/*', '*://www.amazon.com/*']
+      });
+
+      console.log('Amazon tabs found:', amazonTabs.length);
+
+      if (amazonTabs.length > 0) {
+        const hostname = new URL(amazonTabs[0].url).hostname;
+        console.log('Using Amazon tab hostname:', hostname);
+        const lang = detectLanguage(hostname);
+        console.log('Detected language:', lang);
+        return lang;
       }
-      // タブのURL からドメインを判定
-      const hostname = new URL(tab.url).hostname;
-      return hostname.includes('.co.jp') ? 'ja' : 'en';
+
+      // 2. Amazon タブがない場合はアクティブなタブをチェック
+      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (activeTab && activeTab.url) {
+        try {
+          const activeHostname = new URL(activeTab.url).hostname;
+          console.log('Active tab hostname:', activeHostname);
+          const lang = detectLanguage(activeHostname);
+          console.log('Detected language from active tab:', lang);
+          return lang;
+        } catch (error) {
+          console.error('Failed to parse active tab URL:', error);
+        }
+      }
+
+      // 3. デフォルト
+      console.log('Using default language detection');
+      const lang = detectLanguage();
+      console.log('Default language:', lang);
+      return lang;
     } catch (error) {
       console.error('Failed to detect language:', error);
-      // フォールバック：ブラウザ言語
-      return navigator.language?.startsWith('ja') ? 'ja' : 'en';
+      return detectLanguage();
     }
   };
 
   try {
-    // widgets.json を読み込み（options フォルダから）
-    const response = await fetch('options/widgets.json');
+    console.log('Popup loaded, starting initialization...');
+
+    // widgets.json を読み込み（拡張機能リソースから）
+    const response = await fetch(chrome.runtime.getURL('options/widgets.json'));
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const { widgets } = await response.json();
 
-    const language = await detectLanguage();
+    console.log('Widgets loaded:', widgets.length);
+
+    const language = await detectLanguageForCurrentTab();
+    console.log('Final language for UI:', language);
+
     const texts = uiTexts[language];
 
     // UI テキストを設定
+    console.log('Setting UI text to language:', language);
     document.querySelector('h2').textContent = texts.title;
     document.getElementById('save').textContent = texts.saveButton;
 
@@ -65,29 +151,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 保存されたウィジェット設定を読み込み
-    chrome.storage.sync.get({ widgetTypes: defaultWidgetTypes }, (data) => {
-      (Array.isArray(data.widgetTypes) ? data.widgetTypes : defaultWidgetTypes).forEach(type => {
+    try {
+      const data = await storageGet({ widgetTypes: defaultWidgetTypes });
+      const widgetTypesToCheck = Array.isArray(data.widgetTypes) && data.widgetTypes.length > 0
+        ? data.widgetTypes
+        : defaultWidgetTypes;
+
+      widgetTypesToCheck.forEach(type => {
         const cb = form.querySelector(`input[value="${type}"]`);
         if (cb) cb.checked = true;
       });
-    });
+    } catch (storageError) {
+      console.error('Failed to load saved widgets:', storageError);
+      // フォールバック：デフォルト設定をチェック
+      defaultWidgetTypes.forEach(type => {
+        const cb = form.querySelector(`input[value="${type}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
 
     // 保存ボタンのイベント
-    document.getElementById('save').addEventListener('click', () => {
+    document.getElementById('save').addEventListener('click', async () => {
       const checked = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-      chrome.storage.sync.set({ widgetTypes: checked }, () => {
+      try {
+        await storageSet({ widgetTypes: checked });
         status.textContent = texts.saved;
+
         // 現在のタブをリロード
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            chrome.tabs.reload(tabs[0].id);
-          }
-        });
-      });
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab) {
+          await chrome.tabs.reload(tab.id);
+        }
+      } catch (error) {
+        console.error('Failed to save widgets:', error);
+        status.textContent = uiTexts[await detectLanguageForCurrentTab()].loadError;
+        setTimeout(() => status.textContent = '', 2000);
+      }
     });
   } catch (error) {
     console.error('Failed to load widgets:', error);
-    const fallbackTexts = uiTexts[navigator.language?.startsWith('ja') ? 'ja' : 'en'];
+    const fallbackTexts = uiTexts[detectLanguage() === 'ja' ? 'ja' : 'en'];
     status.textContent = fallbackTexts.loadError;
   }
 });

@@ -1,18 +1,12 @@
+import { detectLanguage } from '../js/utils.js';
+import { storageGet, storageSet } from '../js/chrome-api.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('widget-form');
   const status = document.getElementById('status');
 
-  // 言語を検出する
-  const detectLanguage = () => {
-    // HTML lang 属性をチェック
-    const htmlLang = document.documentElement.lang;
-    if (htmlLang && htmlLang.startsWith('ja')) return 'ja';
-    // デフォルト：ブラウザ言語を使用
-    return navigator.language?.startsWith('ja') ? 'ja' : 'en';
-  };
-
   try {
-    // widgets.json を読み込み
+    // widgets.json を読み込み（オプションページから見た相対パス）
     const response = await fetch('./widgets.json');
     const { widgets } = await response.json();
 
@@ -36,21 +30,38 @@ document.addEventListener('DOMContentLoaded', async () => {
       form.appendChild(br);
     });
 
-    // 保存されたウィジェット設定を読み込み
-    chrome.storage.sync.get({ widgetTypes: defaultWidgetTypes }, (data) => {
-      (Array.isArray(data.widgetTypes) ? data.widgetTypes : defaultWidgetTypes).forEach(type => {
-        const cb = form.querySelector(`input[value=\"${type}\"]`);
+    // 保存されたウィジェット設定を読み込み（js/chrome-api.js で統一）
+    try {
+      const data = await storageGet({ widgetTypes: defaultWidgetTypes });
+      const widgetTypesToCheck = Array.isArray(data.widgetTypes) && data.widgetTypes.length > 0
+        ? data.widgetTypes
+        : defaultWidgetTypes;
+
+      widgetTypesToCheck.forEach(type => {
+        const cb = form.querySelector(`input[value="${type}"]`);
         if (cb) cb.checked = true;
       });
-    });
+    } catch (storageError) {
+      console.error('Failed to load saved widgets:', storageError);
+      // フォールバック：デフォルト設定をチェック
+      defaultWidgetTypes.forEach(type => {
+        const cb = form.querySelector(`input[value="${type}"]`);
+        if (cb) cb.checked = true;
+      });
+    }
 
-    // 保存ボタンのイベント
-    document.getElementById('save').addEventListener('click', () => {
+    // 保存ボタンのイベント（js/chrome-api.js で統一）
+    document.getElementById('save').addEventListener('click', async () => {
       const checked = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
-      chrome.storage.sync.set({ widgetTypes: checked }, () => {
+      try {
+        await storageSet({ widgetTypes: checked });
         status.textContent = '保存しました！';
         setTimeout(() => status.textContent = '', 2000);
-      });
+      } catch (error) {
+        console.error('Failed to save widgets:', error);
+        status.textContent = 'エラーが発生しました';
+        setTimeout(() => status.textContent = '', 2000);
+      }
     });
   } catch (error) {
     console.error('Failed to load widgets:', error);
