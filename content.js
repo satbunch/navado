@@ -4,7 +4,8 @@
   const isSigninPage = () => {
     return location.pathname.includes('/ap/signin') ||
            location.pathname.includes('/ap/register') ||
-           location.pathname.includes('/ap/cvf');
+           location.pathname.includes('/ap/cvf') ||
+           location.pathname.includes('/ax/');
   };
 
   // 言語を検出する
