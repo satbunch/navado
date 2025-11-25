@@ -25,12 +25,13 @@
     },
   });
 
+  const findInsertTarget = () =>
+    document.querySelector('#navbar-main, #nav-main, #nav-belt, #navbar') ||
+    document.querySelector('header');
+
   const insertWidgets = () => {
-    const nav = document.getElementById('navbar-main') || document.getElementById('nav-main');
-    if (!nav || !nav.parentNode) {
-      console.warn('Amazon Widgets: nav element が見つかりません');
-      return;
-    }
+    const nav = findInsertTarget();
+    const parent = nav?.parentNode || document.body;
 
     const baseDomain = location.hostname.endsWith('amazon.com') ? 'amazon.com' : 'amazon.co.jp';
     const widgetConfigs = createWidgetConfigs(`https://www.${baseDomain}`);
@@ -58,7 +59,12 @@
         });
         container.appendChild(item);
       });
-      nav.parentNode.insertBefore(container, nav.nextSibling);
+      const referenceNode = nav?.nextSibling || parent.firstChild;
+      if (referenceNode) {
+        parent.insertBefore(container, referenceNode);
+      } else {
+        parent.appendChild(container);
+      }
     });
   };
 
