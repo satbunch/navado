@@ -8,6 +8,12 @@
     "scripting",
     "storage"
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["options/widgets.json"],
+      "matches": ["*://www.amazon.co.jp/*", "*://www.amazon.com/*"]
+    }
+  ],
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
