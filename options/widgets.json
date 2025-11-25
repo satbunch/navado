@@ -1,0 +1,76 @@
+{
+  "widgets": [
+    {
+      "id": "photos",
+      "labels": {
+        "ja": "Amazon Photos",
+        "en": "Amazon Photos"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://www.amazon.co.jp/photos",
+        "com": "https://www.amazon.com/photos"
+      }
+    },
+    {
+      "id": "kindle",
+      "labels": {
+        "ja": "Kindle Unlimited",
+        "en": "Kindle Unlimited"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://www.amazon.co.jp/kindle-dbs/hz/bookshelf?shoppingPortalEnabled=true&ref_=nav_em_gno_ku_0_2_8_9",
+        "com": "https://www.amazon.com/kindle-dbs/hz/bookshelf?shoppingPortalEnabled=true&ref_=nav_em_gno_ku_0_2_8_9"
+      }
+    },
+    {
+      "id": "manage_kindle",
+      "labels": {
+        "ja": "Kindle を管理",
+        "en": "Manage Kindle"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://www.amazon.co.jp/gp/kindle/ku/ku_central?ref_=nav_AccountFlyout_ku",
+        "com": "https://www.amazon.com/gp/kindle/ku/ku_central?ref_=nav_AccountFlyout_ku"
+      }
+    },
+    {
+      "id": "prime_video",
+      "labels": {
+        "ja": "Prime Video",
+        "en": "Prime Video"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://www.amazon.co.jp/gp/video/storefront?ref_=nav_em_aiv_vid_0_2_2_2",
+        "com": "https://www.amazon.com/gp/video/storefront?ref_=nav_em_aiv_vid_0_2_2_2"
+      }
+    },
+    {
+      "id": "music",
+      "labels": {
+        "ja": "Amazon Music",
+        "en": "Amazon Music"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://music.amazon.co.jp/",
+        "com": "https://music.amazon.com/"
+      }
+    },
+    {
+      "id": "subscribe_save",
+      "labels": {
+        "ja": "定期お得便",
+        "en": "Subscribe & Save"
+      },
+      "enabled": true,
+      "urls": {
+        "co.jp": "https://www.amazon.co.jp/gp/subscribe-and-save/manager/viewsubscriptions?ref_=ya_d_l_subscribe_save",
+        "com": "https://www.amazon.com/gp/subscribe-and-save/manager/home"
+      }
+    }
+  ]
+}

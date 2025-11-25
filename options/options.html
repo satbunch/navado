@@ -7,13 +7,10 @@
 <body style="font-family:sans-serif;padding:16px;max-width:600px;margin:auto;">
   <h3>表示するウィジェットを選択</h3>
   <form id="widget-form">
-    <label><input type="checkbox" value="photos"> Amazon Photos</label><br>
-    <label><input type="checkbox" value="kindle"> Kindle Unlimited</label><br>
-    <label><input type="checkbox" value="manage_kindle"> Kindle Unlimited Manager</label><br>
-    <label><input type="checkbox" value="prime_video"> Prime Video</label><br>
+    <!-- チェックボックスは options.js で動的に生成されます -->
   </form>
   <button id="save" style="margin-top:12px;padding:6px 12px;font-size:14px;">保存</button>
   <p id="status" style="margin-top:8px;color:#007700;font-size:13px;"></p>
-  <script src="options.js"></script>
+  <script type="module" src="options.js"></script>
 </body>
 </html>
