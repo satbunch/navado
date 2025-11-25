@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Amazon Services Widgets",
-  "version": "1.7",
+  "name": "Navado",
+  "version": "1.0.0",
   "description": "Amazonトップページにサービスウィジェットを表示します",
   "permissions": [
     "activeTab",
@@ -17,7 +17,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Amazon Services Widgets"
+    "default_title": "Navado"
   },
   "options_ui": {
     "page": "options/options.html",
