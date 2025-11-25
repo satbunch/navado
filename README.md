@@ -1,5 +1,5 @@
 
-# Amazon Services Widgets
+# Navado - Amazon Shortcut Widgets
 
 A lightweight Chrome extension that displays user‑selectable service widgets on Amazon’s homepage, enabling quick navigation to your favorite Amazon services.
 
