@@ -3,7 +3,7 @@
     {
       "id": "photos",
       "labels": {
-        "ja": "Amazon フォト",
+        "ja": "Amazon Photos",
         "en": "Amazon Photos"
       },
       "enabled": true,

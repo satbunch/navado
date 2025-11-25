@@ -1,5 +1,11 @@
 // 選択ウィジェットを共通スタイルで挿入するスクリプト（ウィジェット定義は widgets.json で管理）
 (function () {
+  // サインイン・サインアップページかどうかを判定
+  const isSigninPage = () => {
+    return location.pathname.includes('/ap/signin') ||
+           location.pathname.includes('/ap/register');
+  };
+
   // 言語を検出する
   const detectLanguage = () => {
     // HTML lang 属性をチェック（フォールバック）
@@ -51,6 +57,11 @@
   };
 
   const insertWidgets = async () => {
+    // サインイン・サインアップページでは処理しない
+    if (isSigninPage()) {
+      return;
+    }
+
     try {
       // widgets.json を読み込み
       const response = await fetch(chrome.runtime.getURL('options/widgets.json'));

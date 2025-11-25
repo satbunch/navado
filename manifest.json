@@ -6,7 +6,8 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "web_accessible_resources": [
     {
@@ -14,6 +15,10 @@
       "matches": ["*://www.amazon.co.jp/*", "*://www.amazon.com/*"]
     }
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Amazon Services Widgets"
+  },
   "options_ui": {
     "page": "options/options.html",
     "open_in_tab": true
