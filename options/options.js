@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const defaultWidgetTypes = ['photos', 'kindle', 'manage_kindle', 'prime_video'];
   const form = document.getElementById('widget-form');
   const status = document.getElementById('status');
-  chrome.storage.sync.get({ widgetTypes: ['simple'] }, (data) => {
-    data.widgetTypes.forEach(type => {
+  chrome.storage.sync.get({ widgetTypes: defaultWidgetTypes }, (data) => {
+    (Array.isArray(data.widgetTypes) ? data.widgetTypes : defaultWidgetTypes).forEach(type => {
       const cb = form.querySelector(`input[value=\"${type}\"]`);
       if (cb) cb.checked = true;
     });

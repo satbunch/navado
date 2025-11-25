@@ -18,6 +18,9 @@
         "*://*.amazon.co.jp/*",
         "*://www.amazon.com/*"
       ],
+      "css": [
+        "content.css"
+      ],
       "js": [
         "content.js"
       ],
