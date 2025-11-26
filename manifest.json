@@ -1,14 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Navado",
+  "name": "Navado - Amazon Shortcut widgets",
   "version": "1.0.0",
   "description": "Amazonトップページにサービスウィジェットを表示します",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage",
-    "tabs"
-  ],
+  "permissions": ["activeTab", "scripting", "storage"],
   "web_accessible_resources": [
     {
       "resources": ["options/widgets.json"],
@@ -25,16 +20,9 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*.amazon.co.jp/*",
-        "*://www.amazon.com/*"
-      ],
-      "css": [
-        "content.css"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["*://*.amazon.co.jp/*", "*://www.amazon.com/*"],
+      "css": ["content.css"],
+      "js": ["content.js"],
       "run_at": "document_end"
     }
   ]

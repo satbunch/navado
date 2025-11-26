@@ -4,7 +4,7 @@
 
 ## プロジェクト概要
 
-**Amazon Services Widgets** は、Amazon のホームページにウィジェットを挿入する Chrome 拡張機能です。ユーザーが選択したサービスウィジェット（Amazon Photos、Kindle Unlimited など）をナビゲーションバーの上に表示し、素早くアクセスできるようにします。
+**Navado** は、Amazon のホームページにウィジェットを挿入する Chrome 拡張機能です。ユーザーが選択したサービスウィジェット（Amazon Photos、Kindle Unlimited など）をナビゲーションバーの上に表示し、素早くアクセスできるようにします。
 
 - **マニフェスト**: Manifest V3
 - **対応ドメイン**: `amazon.co.jp` と `amazon.com`
@@ -15,13 +15,15 @@
 ### ファイル構成
 
 ```
-.
-├── manifest.json          # 拡張機能の定義（権限、スクリプト挿入位置）
-├── content.js             # Amazon ページにウィジェットを挿入する
-├── content.css            # ウィジェットのスタイル定義
+navado/
+├── manifest.json              # 拡張機能の定義（権限、スクリプト挿入位置）
+├── content.js                 # Amazon ページにウィジェットを挿入する
+├── content.css                # ウィジェットのスタイル定義
+├── popup.html                 # 拡張機能のポップアップ UI
 ├── options/
-│   ├── options.html       # ユーザー設定ページの UI
-│   └── options.js         # 設定の保存・読み込みロジック
+│   ├── options.html           # ユーザー設定ページの UI
+│   ├── options.js             # 設定の保存・読み込みロジック
+│   └── widgets.json           # ウィジェット定義（マルチ言語対応）
 └── README.md
 ```
 
@@ -29,55 +31,71 @@
 
 1. **コンテントスクリプト実行** (`content.js`):
    - Amazon ページ読み込み時に `document_end` で実行
+   - `options/widgets.json` からウィジェット定義を読み込む
    - `chrome.storage.sync` から有効なウィジェット種別を読み込む
    - DOM を探索してナビゲーション要素を特定
    - ウィジェットコンテナを作成し、設定に応じたウィジェットを挿入
 
 2. **ウィジェット設定** (`options/options.html` + `options/options.js`):
+   - `options/widgets.json` から利用可能なウィジェット一覧を読み込む
    - ユーザーがチェックボックスで表示するウィジェットを選択
    - `chrome.storage.sync` に保存（デバイス間で同期）
    - Amazon ページを再読み込みするとコンテントスクリプトが最新設定を反映
 
 ### 重要な実装詳細
 
-- **ウィジェット定義**: `content.js` の `widgetConfigs` オブジェクトで管理
-  - `photos`, `kindle`, `manage_kindle`, `prime_video` の 4 種類が定義済み
-  - 新しいウィジェットを追加するには `widgetConfigs` に追加後、`options.html` にチェックボックスを追加
+- **ウィジェット定義**: `options/widgets.json` で一元管理
+  - 各ウィジェットに `id`、マルチ言語対応の `labels`、ドメイン別の `urls`、デフォルト有効設定 `enabled` を定義
+  - `content.js` が JSON を読み込んで動的に設定を生成
 
-- **DOM 挿入ポイント**: `#navbar-main`, `#nav-main`, `#nav-belt`, `#nav-belt` の優先順で検索
+- **言語検出**: `detectLanguage()` 関数
+  - HTML の `lang` 属性 → ホスト名 → `navigator.language` の優先順で判定
+  - `amazon.co.jp` なら日本語（ja）、`amazon.com` なら英語（en）
+
+- **DOM 挿入ポイント**: `findInsertTarget()`
+  - `#navbar-main`, `#nav-main`, `#nav-belt`, `#navbar` の優先順で検索
   - 見つからない場合は `<header>` を使用
   - ウィジェットコンテナはナビゲーション要素の直後（`nextSibling`）に挿入
 
-- **ドメイン検出**: `location.hostname` で `amazon.com` か `amazon.co.jp` かを判定し、ウィジェット URL を構築
+- **ドメイン検出**: `location.hostname` で `amazon.com` か `amazon.co.jp` かを判定
+  - widgets.json の `urls.com` または `urls["co.jp"]` を使用
 
-- **スタイリング**: `content.css` で一括管理
-  - コンテナ: flexbox で中央配置、背景色 `#e3e6e6`
-  - ウィジェット: 背景 `#232f3e`、枠線 `#0073bb`、テキスト白
+- **スタイリング**: `content.css` で一括管理＋動的なカラー取得
+  - コンテナ: flexbox で中央配置
+  - ウィジェット: 背景・枠線色は `nav-main` または `nav-belt` から動的に取得（デフォルト: `#232f3e` と `#0073bb`）
+  - テキスト白
+
+- **サインイン・サインアップページの除外**: `isSigninPage()`
+  - `/ap/signin`, `/ap/register`, `/ap/cvf`, `/ax/` パスを検出して処理をスキップ
 
 ## 開発ガイドライン
 
 ### ウィジェットの追加
 
-1. `content.js` の `widgetConfigs` に新しいエントリを追加
-   ```javascript
-   myservice: {
-     elements: [
-       { tag: 'a', text: 'My Service', url: 'https://www.amazon.co.jp/...' }
-     ]
+1. `options/widgets.json` に新しいエントリを追加
+   ```json
+   {
+     "id": "myservice",
+     "labels": {
+       "ja": "マイサービス",
+       "en": "My Service"
+     },
+     "urls": {
+       "co.jp": "https://www.amazon.co.jp/...",
+       "com": "https://www.amazon.com/..."
+     },
+     "enabled": true
    }
    ```
 
-2. `options/options.html` にチェックボックスを追加
-   ```html
-   <label><input type="checkbox" value="myservice"> My Service</label><br>
-   ```
+2. `options/options.js` でチェックボックスを動的に生成（既に実装済み）
 
-3. `content.js` の `defaultWidgetTypes` 配列に追加（オプション）
+3. Amazon ページをリロードで反映
 
 ### スタイルの変更
 
 - `content.css` で `#amazon-widgets-container` と `.amazon-widget`、`.amazon-widget-link` のスタイルを調整
-- インラインスタイルは最小限に留める
+- インラインスタイルはナビゲーションカラーの動的取得のみ
 
 ### テスト・動作確認
 
@@ -92,18 +110,16 @@
 ### よくある修正パターン
 
 - **ウィジェットが表示されない**: `chrome://extensions/` でエラーログを確認。DOM 挿入ポイントが見つからない可能性あり
-- **ウィジェット URL が間違っている**: `createWidgetConfigs` の `baseUrl` 構築ロジックを確認
+- **ウィジェット URL が間違っている**: `options/widgets.json` の `urls` フィールドを確認
 - **オプションページが保存されない**: `chrome.storage.sync.set()` の権限が有効か確認（`manifest.json` の `storage` 権限）
+- **言語が反映されない**: `detectLanguage()` の判定ロジックを確認。HTML `lang` 属性が正確に設定されているか確認
 
 ## 既知の問題
 
-詳細は `REVIEW.md` を参照。主な点：
-
-- ウィジェット URL が `amazon.co.jp` にのみ対応（`amazon.com` ユーザーは多言語対応が必要）
-- 新規インストール時にウィジェットが表示されない（デフォルト設定が空の場合）
-- オプションページのラベル表記がウィジェットのラベルと異なる可能性がある
+- 動的なカラー取得により、テーマ変更時にスタイルが更新されない（ページリロードが必要）
 
 ## Chrome API 使用箇所
 
 - `chrome.storage.sync`: ユーザー設定の永続化・同期
-- `chrome.scripting`: コンテントスクリプトの挿入（manifest.json で宣言的に指定）
+- `chrome.runtime.getURL()`: `options/widgets.json` の読み込み
+- `fetch()`: JSON ファイルの読み込み
