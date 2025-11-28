@@ -3,7 +3,7 @@
   "name": "Navado - Amazon Shortcut widgets",
   "version": "1.0.0",
   "description": "Amazonトップページにサービスウィジェットを表示します",
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "storage"],
   "web_accessible_resources": [
     {
       "resources": ["options/widgets.json"],
@@ -12,7 +12,13 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Navado"
+    "default_title": "Navado",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
   "options_ui": {
     "page": "options/options.html",
